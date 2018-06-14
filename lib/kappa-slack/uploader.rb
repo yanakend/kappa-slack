@@ -25,7 +25,7 @@ module KappaSlack
         login_page.form_with(:id => 'signin_form') do |form|
           form.email = slack_email
           form.password = slack_password
-        end.submit
+        end.click_button
 
         visit('/admin/emoji') do |emoji_page|
           uploaded_page = emoji_page
@@ -46,7 +46,10 @@ module KappaSlack
             next if File.size(file_path) > 64 * 1024
             KappaSlack.logger.info "Uploading #{emote[:name]}"
 
-            uploaded_page = uploaded_page.form_with(:id => 'addemoji') do |form|
+            form = uploaded_page.forms.first
+            form.fields.each { |f| p f.name }
+
+            uploaded_page = uploaded_page.form_with(:action => '/customize/emoji') do |form|
               form.field_with(:name => 'name').value = emote[:name]
               form.file_upload_with(:name => 'img').file_name = file_path
             end.submit
@@ -94,13 +97,12 @@ module KappaSlack
     end
 
     def twitch_emotes
-      response = JSON.parse(http.get_content('https://twitchemotes.com/api_cache/v2/global.json'))
-      url_template = response['template']['small']
-
-      response['emotes'].map do |name, emote|
+      response = JSON.parse(http.get_content('https://twitchemotes.com/api_cache/v3/global.json'))
+      url_template = "https://static-cdn.jtvnw.net/emoticons/v1/{{id}}/1.0"
+      response.map do |_, emote|
         {
-          name: name.parameterize,
-          url: url_template.gsub('{image_id}', emote['image_id'].to_s)
+          name: emote['code'].parameterize,
+          url: url_template.gsub('{{id}}', emote['id'].to_s)
         }
       end
     end

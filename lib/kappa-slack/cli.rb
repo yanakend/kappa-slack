@@ -13,7 +13,7 @@ module KappaSlack
     end
 
     def upload
-      Uploader.new(**options.to_hash.symbolize_keys).upload
+      Uploader.new(options.to_hash.symbolize_keys).upload
     end
   end
 end
